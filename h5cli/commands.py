@@ -17,10 +17,13 @@ class Command(ABC):
     def argument_parser(self) -> ArgumentParser:
         pass
 
-    def __call__(self, argv) -> Namespace:
+    def __call__(self, argv):
         self.logger.debug("Called with arguments %s", argv)
         parser = self.argument_parser()
-        parsed = parser.parse_args(argv)
+        try:
+            parsed = parser.parse_args(argv)
+        except SystemExit:
+            return
         self.logger.debug("Parsed arguments to %s", parsed)
         return self.run(parsed)
 

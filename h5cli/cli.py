@@ -4,7 +4,7 @@ from pathlib import Path
 import logging
 
 from h5py import File, Group, Dataset
-from prompt_toolkit import prompt, print_formatted_text
+from prompt_toolkit import print_formatted_text, PromptSession
 
 from .utils import H5Path, normalise_path, Signal
 from .commands import Command
@@ -22,6 +22,7 @@ class Cli:
             c = cmd_cls(self)
             self.commands[c.name()] = c
 
+        self.session = PromptSession()
         self.file = None
         self.group = None
 
@@ -40,7 +41,7 @@ class Cli:
     def run(self):
         prefix = f"{self.fpath}:{{}} $ "
         while True:
-            text = prompt(prefix.format(self.gpath))
+            text = self.session.prompt(prefix.format(self.gpath))
             argv = shlex.split(text)
             if not argv:
                 continue
