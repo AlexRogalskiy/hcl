@@ -42,7 +42,7 @@ def obj_name(obj: ObjectType, parent_name=None) -> str:
     p_name = parent_name or obj.parent.name
     if not p_name.endswith("/"):
         p_name += "/"
-    return obj.name[len(p_name):]
+    return obj.name[len(p_name) :]
 
 
 # TODO: consider replacing with OS signals
