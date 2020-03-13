@@ -8,7 +8,7 @@ from h5py import Dataset
 from tree_format import format_tree
 
 from prompt_toolkit.completion import Completer, ThreadedCompleter
-from .utils import H5Path, normalise_path, obj_name, Signal, H5PathCompleter
+from .utils import H5Path, normalise_path, obj_name, Signal, H5PathCompleter, is_dataset
 
 
 class Command(ABC):
@@ -60,7 +60,7 @@ class Ls(Command):
 
         obj = self.context.group[str(obj_path)]
         self.logger.debug("Listing item at %s", obj.name)
-        if isinstance(obj, Dataset):
+        if is_dataset(obj):
             return str(path)
         else:
             name = obj.name
@@ -210,7 +210,9 @@ class AttributePrint(Command):
             self.context.print(self._format(attr))
 
     def completer(self):
-        return ThreadedCompleter(H5PathCompleter(self.context, self._include_groups, self._include_datasets))
+        return ThreadedCompleter(
+            H5PathCompleter(self.context, self._include_groups, self._include_datasets)
+        )
 
 
 class Filename(AttributePrint):
@@ -349,14 +351,14 @@ def format_dataset(ds: Dataset):
 
 
 def format_obj(obj):
-    if isinstance(obj, Dataset):
+    if is_dataset(obj):
         return format_dataset(obj)
     name = obj_name(obj)
     return name
 
 
 def get_children(obj):
-    if isinstance(obj, Dataset):
+    if is_dataset(obj):
         return []
     else:
         return [v for _, v in sorted(obj.items())]

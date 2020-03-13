@@ -1,13 +1,24 @@
 from pathlib import PurePosixPath as H5Path
 from typing import List, Union, Iterable
 from enum import Enum, auto
-from collections import deque
 
 from h5py import File, Group, Dataset
 
 from prompt_toolkit.completion import Completion, Completer
 
 ObjectType = Union[File, Group, Dataset]
+
+
+def is_file(obj):
+    return isinstance(obj, File)
+
+
+def is_group(obj):
+    return isinstance(obj, Group)
+
+
+def is_dataset(obj):
+    return isinstance(obj, Dataset)
 
 
 def normalise_path(
@@ -41,7 +52,7 @@ def normalise_path(
 
 
 def obj_name(obj: ObjectType, parent_name=None) -> str:
-    if isinstance(obj, File) or obj.name == "/":
+    if is_file(obj) or obj.name == "/":
         return "/"
 
     p_name = parent_name or obj.parent.name
@@ -67,10 +78,7 @@ class H5PathCompleter(Completer):
     """
 
     def __init__(
-        self,
-        context,
-        include_groups: bool = True,
-        include_datasets: bool = True,
+        self, context, include_groups: bool = True, include_datasets: bool = True,
     ) -> None:
         self.context = context
         self.include_groups = include_groups
@@ -84,9 +92,7 @@ class H5PathCompleter(Completer):
     def group(self):
         return self.context.group
 
-    def get_completions(
-        self, document, complete_event
-    ) -> Iterable[Completion]:
+    def get_completions(self, document, complete_event) -> Iterable[Completion]:
         text = document.text_before_cursor
 
         curr_path = H5Path(text)
@@ -106,5 +112,7 @@ class H5PathCompleter(Completer):
             if not name.startswith(prefix):
                 continue
 
-            if (self.include_groups and isinstance(obj, Group)) or (self.include_datasets and isinstance(obj, Dataset)):
+            if (self.include_groups and is_group(obj)) or (
+                self.include_datasets and is_dataset(obj)
+            ):
                 yield Completion(name[len(prefix) :], 0, display=name)

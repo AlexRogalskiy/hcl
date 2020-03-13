@@ -5,12 +5,12 @@ import logging
 from functools import wraps
 import sys
 
-from h5py import File, Group, Dataset
+from h5py import File
 from prompt_toolkit import print_formatted_text, PromptSession
 from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.formatted_text import to_formatted_text
 
-from .utils import H5Path, normalise_path, Signal
+from .utils import H5Path, normalise_path, Signal, is_dataset, is_group
 from .commands import Command
 
 
@@ -47,7 +47,7 @@ class Cli:
     def __enter__(self):
         self.file = File(self.fpath, mode="r")
         self.group = self.file[str(self.gpath)]
-        if not isinstance(self.group, Group):
+        if not is_group(self.group):
             raise ValueError(f"Not a group: {self.H5Path}")
         return self
 
@@ -89,7 +89,7 @@ class Cli:
     def change_group(self, path: H5Path):
         new_path = normalise_path(path, self.gpath)
         new_obj = self.file[str(new_path)]
-        if isinstance(new_obj, Dataset):
+        if is_dataset(new_obj):
             raise ValueError(f"Object at path is a dataset: {new_path}")
         self.gpath = new_path
         self.group = self.file[str(new_path)]
@@ -100,6 +100,8 @@ class Cli:
         if kwargs.get("file", sys.stdout).isatty():
             print_formatted_text(*args, **kwargs)
         else:
-            text = to_formatted_text(*args)
             keep = {"sep", "end", "file", "flush"}
-            print(*(tup[1] for tup in to_formatted_text(*args)), **{k: v for k, v in kwargs.items()if k in keep})
+            print(
+                *(tup[1] for tup in to_formatted_text(*args)),
+                **{k: v for k, v in kwargs.items() if k in keep},
+            )
