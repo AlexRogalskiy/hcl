@@ -70,7 +70,7 @@ class Cli:
         try:
             return fn(argv[1:])
         except Exception as e:
-            logger.exception()
+            logger.exception(e)
             self.print(f"Uncaught exception: {e}", file=sys.stderr)
             return
 
@@ -97,9 +97,9 @@ class Cli:
     @wraps(print_formatted_text)
     def print(self, *args, **kwargs):
         kwargs = {**self.print_kwargs, **kwargs}
-        text = to_formatted_text(*args, **kwargs)
         if kwargs.get("file", sys.stdout).isatty():
-            print_formatted_text(text)
+            print_formatted_text(*args, **kwargs)
         else:
-            keep = {"sep", "end", "file"}
-            print(*(tup[1] for tup in text), **{k: v for k, v in kwargs.items()if k in keep})
+            text = to_formatted_text(*args)
+            keep = {"sep", "end", "file", "flush"}
+            print(*(tup[1] for tup in to_formatted_text(*args)), **{k: v for k, v in kwargs.items()if k in keep})
