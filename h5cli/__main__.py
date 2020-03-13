@@ -31,16 +31,33 @@ def get_plugin_commands(import_path):
 def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("file", nargs="?", help="HDF5 file to explore")
-    parser.add_argument("-c", "--command", help="Run a single command and exit. Not suitable for piping/ redirection.")
-    parser.add_argument("-p", "--plugin", action="append", help="Import path for additional commands. Can be a Command subclass, an iterable of them, or a callable returning either. Format '{absolute_module}:{object}'. Can be used multiple times.", default=())
     parser.add_argument(
-        "--verbose", "-v", action="count", default=0, help="Increase logging verbosity"
+        "-c",
+        "--command",
+        help="Run a single command and exit. Output can be redirected but not piped.",
+    )
+    parser.add_argument(
+        "-p",
+        "--plugin",
+        action="append",
+        help="Import path for additional commands. Can be a Command subclass, an iterable of them, or a callable returning either. Format '{absolute_module}:{object}'. Can be used multiple times.",
+        default=(),
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="count",
+        default=0,
+        help="Increase logging verbosity, up to -vvv for debug.",
     )
     args = parser.parse_args()
 
-    log_level = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}.get(
-        args.verbose, logging.DEBUG
-    )
+    log_level = {
+        0: logging.CRITICAL,
+        1: logging.WARN,
+        2: logging.INFO,
+        3: logging.DEBUG,
+    }.get(args.verbose, logging.DEBUG)
 
     logging.basicConfig(level=log_level)
 

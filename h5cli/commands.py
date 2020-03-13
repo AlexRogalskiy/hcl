@@ -5,8 +5,10 @@ import logging
 import pprint
 
 from h5py import Dataset
+from tree_format import format_tree
 
-from .utils import H5Path, normalise_path, obj_name, Signal
+from prompt_toolkit.completion import Completer, ThreadedCompleter
+from .utils import H5Path, normalise_path, obj_name, Signal, H5PathCompleter
 
 
 class Command(ABC):
@@ -36,6 +38,9 @@ class Command(ABC):
     def name(self) -> str:
         pass
 
+    def completer(self) -> Completer:
+        return None
+
 
 class Ls(Command):
     def name(self):
@@ -59,9 +64,7 @@ class Ls(Command):
             return str(path)
         else:
             name = obj.name
-            rows = sorted(
-                obj_name(child, name) for child in obj.values()
-            )
+            rows = sorted(obj_name(child, name) for child in obj.values())
             return "\n".join(rows)
 
     def run(self, parsed_args):
@@ -75,6 +78,9 @@ class Ls(Command):
             out = "\n".join(f"{path}:\n{self.ls_object(path)}" for path in paths)
 
         self.context.print(out)
+
+    def completer(self):
+        return ThreadedCompleter(H5PathCompleter(self.context, include_datasets=False))
 
 
 class Pwd(Command):
@@ -109,6 +115,9 @@ class Cd(Command):
             self.context.print(str(e), file=sys.stderr)
         except ValueError as e:
             self.context.print(str(e), file=sys.stderr)
+
+    def completer(self):
+        return ThreadedCompleter(H5PathCompleter(self.context, include_datasets=False))
 
 
 class Exit(Command):
@@ -161,17 +170,26 @@ class Attrs(Command):
         else:
             self.context.print(pprint.pformat(obj.attrs[parsed_args.attr]))
 
+    def completer(self):
+        return ThreadedCompleter(H5PathCompleter(self.context))
+
 
 class AttributePrint(Command):
     _name = None
     _pprint = False
 
+    _include_groups = True
+    _include_datasets = True
+
     def name(self):
         return self._name
 
     def argument_parser(self):
-        parser = ArgumentParser(self._name, description=f"Get object {self._name}")
-        parser.add_argument("path", type=H5Path, help="Path to object")
+        parts = ["group" * self._include_groups, "dataset" * self._include_datasets]
+        s = " or ".join(parts)
+
+        parser = ArgumentParser(self._name, description=f"Get {s} {self._name}")
+        parser.add_argument("path", type=H5Path, help=f"Path to {s}")
         return parser
 
     def _format(self, obj):
@@ -190,6 +208,9 @@ class AttributePrint(Command):
 
         if attr is not None:
             self.context.print(self._format(attr))
+
+    def completer(self):
+        return ThreadedCompleter(H5PathCompleter(self.context, self._include_groups, self._include_datasets))
 
 
 class Filename(AttributePrint):
@@ -219,53 +240,65 @@ class Name(AttributePrint):
 class Shape(AttributePrint):
     _name = "shape"
     _pprint = True
+    _include_groups = False
 
 
 class Dtype(AttributePrint):
     _name = "dtype"
+    _include_groups = False
 
 
 class Size(AttributePrint):
     _name = "size"
+    _include_groups = False
 
 
 class Maxshape(AttributePrint):
     _name = "maxshape"
     _pprint = True
+    _include_groups = False
 
 
 class Chunks(AttributePrint):
     _name = "chunks"
     _pprint = True
+    _include_groups = False
 
 
 class Compression(AttributePrint):
     _name = "compression"
+    _include_groups = False
 
 
 class CompressionOpts(AttributePrint):
     _name = "compression_opts"
     _pprint = True
+    _include_groups = False
 
 
 class Scaleoffset(AttributePrint):
     _name = "scaleoffset"
+    _include_groups = False
 
 
 class Shuffle(AttributePrint):
     _name = "shuffle"
+    _include_groups = False
 
 
 class Fletcher32(AttributePrint):
     _name = "fletcher32"
+    _include_groups = False
 
 
 class Fillvalue(AttributePrint):
     _name = "fillvalue"
+    _include_groups = False
 
 
 class IsVirtual(AttributePrint):
     _name = "is_virtual"
+    _include_groups = False
 
 
 class Help(Command):
@@ -311,6 +344,48 @@ class Help(Command):
         self.context.print(*out, sep="\n")
 
 
+def format_dataset(ds: Dataset):
+    return f"{obj_name(ds)} ({'x'.join(str(s) for s in ds.shape)} {str(ds.dtype)})"
+
+
+def format_obj(obj):
+    if isinstance(obj, Dataset):
+        return format_dataset(obj)
+    name = obj_name(obj)
+    return name
+
+
+def get_children(obj):
+    if isinstance(obj, Dataset):
+        return []
+    else:
+        return [v for _, v in sorted(obj.items())]
+
+
+class Tree(Command):
+    def name(self):
+        return "tree"
+
+    def argument_parser(self):
+        parser = ArgumentParser(self.name(), description="Show hierarchy as a tree")
+        parser.add_argument("path", nargs="*", type=H5Path, help="Groups to show")
+        return parser
+
+    def run(self, parsed_args):
+        if not parsed_args.path:
+            objs = [self.context.group]
+        else:
+            objs = [self.context.group[str(p)] for p in parsed_args.path]
+        out = [
+            format_tree(obj, format_node=format_obj, get_children=get_children)
+            for obj in objs
+        ]
+        self.context.print(*out, sep="\n\n")
+
+    def completer(self):
+        return H5PathCompleter(self.context, include_datasets=False)
+
+
 all_commands = [
     Ls,
     Pwd,
@@ -336,4 +411,5 @@ all_commands = [
     Fillvalue,
     IsVirtual,
     Help,
+    Tree,
 ]
