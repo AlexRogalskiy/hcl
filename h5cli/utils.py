@@ -51,14 +51,12 @@ def normalise_path(
     return out
 
 
-def obj_name(obj: ObjectType, parent_name=None) -> str:
-    if is_file(obj) or obj.name == "/":
+def obj_name(obj: ObjectType) -> str:
+    stripped = obj.name.strip("/")
+    if not stripped:
         return "/"
 
-    p_name = parent_name or obj.parent.name
-    if not p_name.endswith("/"):
-        p_name += "/"
-    return obj.name[len(p_name) :]
+    return stripped.split("/")[-1]
 
 
 # TODO: consider replacing with OS signals

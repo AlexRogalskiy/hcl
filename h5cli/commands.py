@@ -63,8 +63,7 @@ class Ls(Command):
         if is_dataset(obj):
             return str(path)
         else:
-            name = obj.name
-            rows = sorted(obj_name(child, name) for child in obj.values())
+            rows = sorted(obj.keys())
             return "\n".join(rows)
 
     def run(self, parsed_args):
