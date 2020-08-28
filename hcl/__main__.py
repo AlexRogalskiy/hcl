@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import logging
 import shlex
 from importlib import import_module
+import sys
 
 from .cli import Cli
 from .commands import Command, all_commands as COMMANDS
@@ -30,7 +31,11 @@ def get_plugin_commands(import_path):
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("file", nargs="?", help="HDF5 file to explore")
+    parser.add_argument(
+        "file",
+        nargs="?",
+        help="HDF5 file to explore. Add ':/path/to/group' to start in a specific group.",
+    )
     parser.add_argument(
         "-c",
         "--command",
@@ -40,7 +45,7 @@ def main():
         "-p",
         "--plugin",
         action="append",
-        help="Import path for additional commands. Can be a Command subclass, an iterable of them, or a callable returning either. Format '{absolute_module}:{object}'. Can be used multiple times.",
+        help="Import path for additional commands. Imported object can be a Command subclass, an iterable of them, or a callable returning either. Format '{absolute_module}:{object}'. Can be used multiple times.",
         default=(),
     )
     parser.add_argument(
@@ -49,6 +54,14 @@ def main():
         action="count",
         default=0,
         help="Increase logging verbosity, up to -vvv for debug.",
+    )
+    parser.add_argument(
+        "--mode", "-m", default="r", help="Mode in which to open the file. "
+        "'r' (default): Readonly, file must exist. "
+        "'r+': Read/write, file must exist. "
+        "'w': Create file, truncate if exists. "
+        "'w-' or 'x': Create file, fail if exists. "
+        "'a': Read/write if exists, create otherwise."
     )
     args = parser.parse_args()
 
@@ -61,10 +74,24 @@ def main():
 
     logging.basicConfig(level=log_level)
 
+    if not args.file:
+        parser.print_help()
+        sys.exit()
+
+    fpath_gpath = args.file.split(":")
+    els = len(fpath_gpath)
+    if els == 1:
+        fpath = fpath_gpath[0]
+        gpath = "/"
+    elif els == 2:
+        fpath, gpath = fpath_gpath
+    else:
+        raise ValueError(f"Got more than one group path from argument '{args.file}'")
+
     for import_path in args.plugin:
         COMMANDS.extend(get_plugin_commands(import_path))
 
-    with Cli(args.file, commands=COMMANDS) as cli:
+    with Cli(fpath, gpath=gpath, commands=COMMANDS) as cli:
         if args.command:
             cli.run_command(shlex.split(args.command))
         else:

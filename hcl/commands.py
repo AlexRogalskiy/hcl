@@ -1,8 +1,10 @@
+from typing import Optional
 import sys
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 import logging
 import pprint
+from textwrap import indent
 
 from h5py import Dataset
 from tree_format import format_tree
@@ -38,7 +40,7 @@ class Command(ABC):
     def name(self) -> str:
         pass
 
-    def completer(self) -> Completer:
+    def completer(self) -> Optional[Completer]:
         return None
 
 
@@ -49,7 +51,7 @@ class Ls(Command):
     def argument_parser(self):
         parser = ArgumentParser(self.name(), description="List members of a group")
         parser.add_argument(
-            "path", nargs="*", help="Paths to list the directories of", type=H5Path
+            "path", nargs="*", help="Paths to list the members of", type=H5Path
         )
 
         return parser
@@ -64,7 +66,7 @@ class Ls(Command):
             return str(path)
         else:
             rows = sorted(obj.keys())
-            return "\n".join(rows)
+            return "  ".join(rows)
 
     def run(self, parsed_args):
         paths = parsed_args.path
@@ -74,7 +76,7 @@ class Ls(Command):
         if len(paths) == 1:
             out = self.ls_object(paths[0])
         else:
-            out = "\n".join(f"{path}:\n{self.ls_object(path)}" for path in paths)
+            out = "\n\n".join(f"{path}:\n{self.ls_object(path)}" for path in paths)
 
         self.context.print(out)
 
@@ -147,7 +149,7 @@ class Attrs(Command):
         )
         parser.add_argument("attr", nargs="?", help="Attribute to check")
         parser.add_argument(
-            "-a", "--all", action="store_true", help="Show all attribute values"
+            "-a", "--all", action="store_true", help="Show all attribute values, in recfile-like format"
         )
         return parser
 
@@ -160,12 +162,17 @@ class Attrs(Command):
         if parsed_args.all:
             out = []
             for k, v in sorted(obj.attrs.items()):
-                out.append(f"{k}:\n{pprint.pformat(v, indent=2)}")
-            self.context.print(*out, sep="\n\n")
+                formatted = pprint.pformat(v, indent=2)
+                n_lines = formatted.count("\n") + 1
+                if n_lines == 1:
+                    out.append(f"{k}: {formatted}")
+                else:
+                    out.append(f"{k}:\n{indent(formatted, '+ ')}")
+            self.context.print(*out, sep="\n")
             return
 
         if not parsed_args.attr:
-            self.context.print(sorted(obj.attrs.keys()))
+            self.context.print("\n".join(sorted(obj.attrs.keys())))
         else:
             self.context.print(pprint.pformat(obj.attrs[parsed_args.attr]))
 
@@ -174,7 +181,7 @@ class Attrs(Command):
 
 
 class AttributePrint(Command):
-    _name = None
+    _name: str
     _pprint = False
 
     _include_groups = True
@@ -184,7 +191,11 @@ class AttributePrint(Command):
         return self._name
 
     def argument_parser(self):
-        parts = ["group" * self._include_groups, "dataset" * self._include_datasets]
+        parts = []
+        if self._include_groups:
+            parts.append("group")
+        if self._include_datasets:
+            parts.append("dataset")
         s = " or ".join(parts)
 
         parser = ArgumentParser(self._name, description=f"Get {s} {self._name}")
@@ -346,7 +357,11 @@ class Help(Command):
 
 
 def format_dataset(ds: Dataset):
-    return f"{obj_name(ds)} ({'x'.join(str(s) for s in ds.shape)} {str(ds.dtype)})"
+    try:
+        dtype = str(ds.dtype)
+    except Exception:
+        dtype = "<UNKNOWN>"
+    return f"{obj_name(ds)}\t{'x'.join(str(s) for s in ds.shape)}\t{dtype}"
 
 
 def format_obj(obj):

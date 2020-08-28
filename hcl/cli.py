@@ -25,8 +25,13 @@ class Cli:
         commands: Sequence[Type[Command]] = (),
         session_kwargs=None,
         print_kwargs=None,
+        mode="r",
     ):
         self.fpath = Path(fpath)
+        if not gpath:
+            gpath = "/"
+        elif not gpath.startswith("/"):
+            gpath = "/" + gpath
         self.gpath = H5Path(gpath)
         self.print_kwargs = print_kwargs or dict()
 
@@ -39,13 +44,14 @@ class Cli:
 
         self.session_kwargs = {"completer": NestedCompleter(completers)}
         self.session_kwargs.update(session_kwargs or dict())
+        self.mode = mode
 
         self.session = None
         self.file = None
         self.group = None
 
     def __enter__(self):
-        self.file = File(self.fpath, mode="r")
+        self.file = File(self.fpath, mode=self.mode)
         self.group = self.file[str(self.gpath)]
         if not is_group(self.group):
             raise ValueError(f"Not a group: {self.H5Path}")
@@ -80,11 +86,12 @@ class Cli:
             self.session = PromptSession(**self.session_kwargs)
 
         while True:
-            text = self.session.prompt(prefix.format(self.gpath))
-            argv = shlex.split(text)
-            out = self.run_command(argv)
-            if out == Signal.QUIT:
-                break
+            for token in self.session.prompt(prefix.format(self.gpath)).split(";"):
+                cmd = token.strip()
+                argv = shlex.split(cmd)
+                out = self.run_command(argv)
+                if out == Signal.QUIT:
+                    break
 
     def change_group(self, path: H5Path):
         new_path = normalise_path(path, self.gpath)

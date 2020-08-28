@@ -76,7 +76,10 @@ class H5PathCompleter(Completer):
     """
 
     def __init__(
-        self, context, include_groups: bool = True, include_datasets: bool = True,
+        self,
+        context,
+        include_groups: bool = True,
+        include_datasets: bool = True,
     ) -> None:
         self.context = context
         self.include_groups = include_groups
