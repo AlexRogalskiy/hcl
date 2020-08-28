@@ -61,6 +61,8 @@ def obj_name(obj: ObjectType) -> str:
 
 # TODO: consider replacing with OS signals
 class Signal(Enum):
+    SUCCESS = auto()
+    FAILURE = auto()
     QUIT = auto()
 
 
