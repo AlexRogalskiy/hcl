@@ -124,7 +124,7 @@ class Exit(Command):
         return "exit"
 
     def argument_parser(self):
-        return ArgumentParser(self.name(), description="Quit h5cli")
+        return ArgumentParser(self.name(), description="Quit hcl")
 
     def run(self, parsed_args):
         self.logger.debug("Quitting")
