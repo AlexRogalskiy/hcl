@@ -1,7 +1,6 @@
 # runtime
 h5py
 prompt-toolkit
-tabulate
 tree-format
 
 # dev

@@ -5,7 +5,7 @@ here = Path(__file__).resolve().parent
 
 long_description = (here / "README.md").read_text()
 
-install_requires = ["h5py", "prompt-toolkit", "tabulate", "tree-format"]
+install_requires = ["h5py", "prompt-toolkit", "tree-format"]
 
 setup(
     name="hcl",
