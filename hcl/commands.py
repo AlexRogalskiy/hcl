@@ -147,9 +147,19 @@ class Attrs(Command):
             type=H5Path,
             help="Path to object whose attributes to check",
         )
-        parser.add_argument("attr", nargs="?", help="Attribute to check")
         parser.add_argument(
-            "-a", "--all", action="store_true", help="Show all attribute values, in recfile-like format"
+            "attr",
+            nargs="*",
+            help="Any number of attributes to check. "
+            "If none are given, show the names of all available attributes. "
+            "If one is given, show the value of that attribute. "
+            "If several are given, show the values for all of those attributes, in recfile-like format.",
+        )
+        parser.add_argument(
+            "-a",
+            "--all",
+            action="store_true",
+            help="Show all attribute values, in recfile-like format",
         )
         return parser
 
@@ -159,22 +169,29 @@ class Attrs(Command):
         else:
             obj = self.context.group[str(parsed_args.path)]
 
-        if parsed_args.all:
-            out = []
-            for k, v in sorted(obj.attrs.items()):
-                formatted = pprint.pformat(v, indent=2)
-                n_lines = formatted.count("\n") + 1
-                if n_lines == 1:
-                    out.append(f"{k}: {formatted}")
-                else:
-                    out.append(f"{k}:\n{indent(formatted, '+ ')}")
-            self.context.print(*out, sep="\n")
+        keys = parsed_args.attr
+        if len(keys) == 1:
+            self.context.print(pprint.pformat(obj.attrs[parsed_args.attr]))
             return
 
-        if not parsed_args.attr:
-            self.context.print("\n".join(sorted(obj.attrs.keys())))
-        else:
-            self.context.print(pprint.pformat(obj.attrs[parsed_args.attr]))
+        if len(keys) == 0:
+            sorted_keys = sorted(obj.attrs.keys())
+            if parsed_args.all:
+                keys = sorted_keys
+            else:
+                self.context.print("\n".join(sorted_keys))
+                return
+
+        for k in keys:
+            v = obj.attrs[k]
+            out = []
+            formatted = pprint.pformat(v, indent=2)
+            n_lines = formatted.count("\n") + 1
+            if n_lines == 1:
+                out.append(f"{k}: {formatted}")
+            else:
+                out.append(f"{k}:\n{indent(formatted, '+ ')}")
+            self.context.print(*out, sep="\n")
 
     def completer(self):
         return ThreadedCompleter(H5PathCompleter(self.context))
