@@ -77,8 +77,8 @@ class Cli:
             return fn(argv[1:])
         except Exception as e:
             logger.exception(e)
-            self.print(f"Uncaught exception: {e}", file=sys.stderr)
-            return
+            self.print(f"Uncaught {type(e).__name__}: {e}", file=sys.stderr)
+            return Signal.FAILURE
 
     def run(self):
         prefix = f"{self.fpath}:{{}} $ "

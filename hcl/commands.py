@@ -28,12 +28,12 @@ class Command(ABC):
         try:
             parsed = parser.parse_args(argv)
         except SystemExit:
-            return
+            return Signal.SUCCESS
         self.logger.debug("Parsed arguments to %s", parsed)
         return self.run(parsed)
 
     @abstractmethod
-    def run(self, parsed_args: Namespace):
+    def run(self, parsed_args: Namespace) -> Signal:
         pass
 
     @abstractmethod
@@ -79,6 +79,7 @@ class Ls(Command):
             out = "\n\n".join(f"{path}:\n{self.ls_object(path)}" for path in paths)
 
         self.context.print(out)
+        return Signal.SUCCESS
 
     def completer(self):
         return ThreadedCompleter(H5PathCompleter(self.context, include_datasets=False))
@@ -93,6 +94,7 @@ class Pwd(Command):
 
     def run(self, parsed_args):
         self.context.print(str(self.context.gpath))
+        return Signal.SUCCESS
 
 
 class Cd(Command):
@@ -112,10 +114,14 @@ class Cd(Command):
             return
         try:
             self.context.change_group(path)
+            sig = Signal.SUCCESS
         except KeyError as e:
             self.context.print(str(e), file=sys.stderr)
+            sig = Signal.FAILURE
         except ValueError as e:
             self.context.print(str(e), file=sys.stderr)
+            sig = Signal.FAILURE
+        return sig
 
     def completer(self):
         return ThreadedCompleter(H5PathCompleter(self.context, include_datasets=False))
@@ -192,6 +198,7 @@ class Attrs(Command):
             else:
                 out.append(f"{k}:\n{indent(formatted, '+ ')}")
             self.context.print(*out, sep="\n")
+        return Signal.SUCCESS
 
     def completer(self):
         return ThreadedCompleter(H5PathCompleter(self.context))
@@ -231,10 +238,11 @@ class AttributePrint(Command):
             attr = getattr(obj, self._name)
         except AttributeError as e:
             self.context.print(str(e), file=sys.stderr)
-            return
+            return Signal.FAILURE
 
         if attr is not None:
             self.context.print(self._format(attr))
+        return Signal.SUCCESS
 
     def completer(self):
         return ThreadedCompleter(
@@ -349,10 +357,6 @@ class Help(Command):
 
     def run(self, parsed_args):
         commands = sorted(self.context.commands)
-        if parsed_args.short:
-            self.context.print(*commands, sep="\n")
-            return
-
         if parsed_args.long:
             self.context.print(
                 *(
@@ -361,7 +365,11 @@ class Help(Command):
                 ),
                 sep="\n\n",
             )
-            return
+            return Signal.SUCCESS
+
+        if parsed_args.short:
+            self.context.print(*commands, sep="\n")
+            return Signal.SUCCESS
 
         indent = max(len(c) for c in commands) + 4
         out = []
@@ -371,6 +379,7 @@ class Help(Command):
             out.append(f"{c}{' ' * (indent - len(c))}{short}")
 
         self.context.print(*out, sep="\n")
+        return Signal.SUCCESS
 
 
 def format_dataset(ds: Dataset):
@@ -414,9 +423,57 @@ class Tree(Command):
             for obj in objs
         ]
         self.context.print(*out, sep="\n\n")
+        return Signal.SUCCESS
 
     def completer(self):
         return H5PathCompleter(self.context, include_datasets=False)
+
+
+class Cp(Command):
+    def name(self):
+        return "cp"
+
+    def argument_parser(self):
+        parser = ArgumentParser(
+            self.name(),
+            description="Copy an object from one path to another; always recursive.",
+        )
+        parser.add_argument(
+            "source",
+            nargs="+",
+            help="Original object to copy. "
+            "Trailing slash means copy all objects from the given group, not the group itself.",
+        )
+        parser.add_argument(
+            "dest",
+            help="Destination to copy to. "
+            "Trailing slash OR multiple sources means copy *into* the given group, keeping original names. "
+            "Otherwise, copy to new group/dataset of the given name.",
+        )
+        return parser
+
+    def run(self, parsed_args):
+        sources = []
+        for src in parsed_args.source:
+            if src.endswith("/") and len(src) > 1:
+                for member in self.context.group[str(src[:-1])].values():
+                    sources.append(member)
+            else:
+                sources.append(self.context.group[str(src)])
+
+        dest = parsed_args.dest
+        into_group = len(sources) > 1 or dest.endswith("/")
+        if len(dest) > 1:
+            dest = dest.rstrip("/")
+
+        if into_group:
+            for src in sources:
+                self.context.group.copy(src, dest)
+        else:
+            src = sources.pop()
+            dest_path = H5Path(dest)
+            self.context.group.copy(src, str(dest_path.parent), dest_path.name)
+        return Signal.SUCCESS
 
 
 all_commands = [
@@ -445,4 +502,5 @@ all_commands = [
     IsVirtual,
     Help,
     Tree,
+    Cp,
 ]
