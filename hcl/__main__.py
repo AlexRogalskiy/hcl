@@ -56,12 +56,15 @@ def main():
         help="Increase logging verbosity, up to -vvv for debug.",
     )
     parser.add_argument(
-        "--mode", "-m", default="r", help="Mode in which to open the file. "
+        "--mode",
+        "-m",
+        default="r",
+        help="Mode in which to open the file. "
         "'r' (default): Readonly, file must exist. "
         "'r+': Read/write, file must exist. "
         "'w': Create file, truncate if exists. "
         "'w-' or 'x': Create file, fail if exists. "
-        "'a': Read/write if exists, create otherwise."
+        "'a': Read/write if exists, create otherwise.",
     )
     args = parser.parse_args()
 
