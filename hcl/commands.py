@@ -437,51 +437,51 @@ class Tree(Command):
         return H5PathCompleter(self.context, include_datasets=False)
 
 
-class Cp(Command):
-    def name(self):
-        return "cp"
+# class Cp(Command):
+#     def name(self):
+#         return "cp"
 
-    def argument_parser(self):
-        parser = ArgumentParser(
-            self.name(),
-            description="Copy an object from one path to another; always recursive.",
-        )
-        parser.add_argument(
-            "source",
-            nargs="+",
-            help="Original object to copy. "
-            "Trailing slash means copy all objects from the given group, not the group itself.",
-        )
-        parser.add_argument(
-            "dest",
-            help="Destination to copy to. "
-            "Trailing slash OR multiple sources means copy *into* the given group, keeping original names. "
-            "Otherwise, copy to new group/dataset of the given name.",
-        )
-        return parser
+#     def argument_parser(self):
+#         parser = ArgumentParser(
+#             self.name(),
+#             description="Copy an object from one path to another; always recursive.",
+#         )
+#         parser.add_argument(
+#             "source",
+#             nargs="+",
+#             help="Original object to copy. "
+#             "Trailing slash means copy all objects from the given group, not the group itself.",
+#         )
+#         parser.add_argument(
+#             "dest",
+#             help="Destination to copy to. "
+#             "Trailing slash OR multiple sources means copy *into* the given group, keeping original names. "
+#             "Otherwise, copy to new group/dataset of the given name.",
+#         )
+#         return parser
 
-    def run(self, parsed_args):
-        sources = []
-        for src in parsed_args.source:
-            if src.endswith("/") and len(src) > 1:
-                for member in self.context.group[str(src[:-1])].values():
-                    sources.append(member)
-            else:
-                sources.append(self.context.group[str(src)])
+#     def run(self, parsed_args):
+#         sources = []
+#         for src in parsed_args.source:
+#             if src.endswith("/") and len(src) > 1:
+#                 for member in self.context.group[str(src[:-1])].values():
+#                     sources.append(member)
+#             else:
+#                 sources.append(self.context.group[str(src)])
 
-        dest = parsed_args.dest
-        into_group = len(sources) > 1 or dest.endswith("/")
-        if len(dest) > 1:
-            dest = dest.rstrip("/")
+#         dest = parsed_args.dest
+#         into_group = len(sources) > 1 or dest.endswith("/")
+#         if len(dest) > 1:
+#             dest = dest.rstrip("/")
 
-        if into_group:
-            for src in sources:
-                self.context.group.copy(src, dest)
-        else:
-            src = sources.pop()
-            dest_path = H5Path(dest)
-            self.context.group.copy(src, str(dest_path.parent), dest_path.name)
-        return Signal.SUCCESS
+#         if into_group:
+#             for src in sources:
+#                 self.context.group.copy(src, dest)
+#         else:
+#             src = sources.pop()
+#             dest_path = H5Path(dest)
+#             self.context.group.copy(src, str(dest_path.parent), dest_path.name)
+#         return Signal.SUCCESS
 
 
 all_commands = [
@@ -510,5 +510,5 @@ all_commands = [
     IsVirtual,
     Help,
     Tree,
-    Cp,
+    # Cp,
 ]
