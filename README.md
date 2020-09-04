@@ -18,15 +18,14 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -c COMMAND, --command COMMAND
-                        Run a single command and exit. Output can be
-                        redirected but not piped.
+                        Run a single command and exit.
   -p PLUGIN, --plugin PLUGIN
                         Import path for additional commands. Imported object
                         can be a Command subclass, an iterable of them, or a
                         callable returning either. Format
                         '{absolute_module}:{object}'. Can be used multiple
                         times.
-  --verbose, -v         Increase logging verbosity, up to -vvv for debug.
+  --verbose, -v         Increase logging verbosity, up to -vv for debug.
   --mode MODE, -m MODE  Mode in which to open the file. 'r' (default):
                         Readonly, file must exist. 'r+': Read/write, file must
                         exist. 'w': Create file, truncate if exists. 'w-' or
@@ -36,15 +35,12 @@ optional arguments:
 
 ### Commands available
 
-Short descriptions:
-
 ```_commands
 attrs               List attributes or look at one attribute.
 cd                  Change working group.
 chunks              Get dataset chunks.
 compression         Get dataset compression.
 compression_opts    Get dataset compression_opts.
-cp                  Copy an object from one path to another; always recursive.
 driver              Get group or dataset driver.
 dtype               Get dataset dtype.
 exit                Quit hcl.
@@ -67,6 +63,10 @@ tree                Show hierarchy as a tree.
 userblock_size      Get group or dataset userblock_size.
 ```
 
+See files in [commands/](./commands) for usage for each command.
+
 ## Notes
 
 Very similar to [h5cli](https://pypi.org/project/h5cli/).
+`hcl` features more documentation, piping output from `--command` mode, and doesn't crash when I try to run it.
+, piping output from `--command` mode, and doesn't crash when I try to run it.
