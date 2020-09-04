@@ -119,5 +119,6 @@ class Cli:
             else:
                 formatted_items = args
             print(
-                *formatted_items, **{k: v for k, v in kwargs.items() if k in keep},
+                *formatted_items,
+                **{k: v for k, v in kwargs.items() if k in keep},
             )

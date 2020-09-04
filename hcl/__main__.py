@@ -35,7 +35,7 @@ def main():
     parser.add_argument(
         "file",
         nargs="?",
-        help="HDF5 file to explore. Add ':/path/to/group' to start in a specific group.",
+        help="HDF5 file to explore. Add ':/path/to/group' to start in a specific group. If this is not given, only `--help` or `--command '<some_command> --help'` can be used.",
     )
     parser.add_argument(
         "-c",
@@ -81,13 +81,19 @@ def main():
 
     if not args.file:
         retval = 0
-        if args.command and ";" not in args.command and (args.command == "help" or "--help" in args.command):
+        if (
+            args.command
+            and ";" not in args.command
+            and (args.command == "help" or "--help" in args.command)
+        ):
             with Cli(None, commands=COMMANDS, interactive=not piped) as cli:
                 result = cli.run_command(shlex.split(args.command))
             if result != Signal.SUCCESS:
                 retval = 1
         else:
-            logger.warning("No file given and other args not interpreted as help message command")
+            logger.warning(
+                "No file given and other args not interpreted as help message command"
+            )
             parser.print_help()
             retval = 1
         sys.exit(retval)

@@ -69,4 +69,3 @@ See files in [commands/](./commands) for usage for each command.
 
 Very similar to [h5cli](https://pypi.org/project/h5cli/).
 `hcl` features more documentation, piping output from `--command` mode, and doesn't crash when I try to run it.
-, piping output from `--command` mode, and doesn't crash when I try to run it.
