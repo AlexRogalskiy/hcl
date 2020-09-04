@@ -28,7 +28,7 @@ class Cli:
         mode="r",
         interactive=True,
     ):
-        self.fpath = Path(fpath)
+        self.fpath = Path(fpath) if fpath else None
         if not gpath:
             gpath = "/"
         elif not gpath.startswith("/"):
@@ -53,14 +53,16 @@ class Cli:
         self.group = None
 
     def __enter__(self):
-        self.file = File(self.fpath, mode=self.mode)
-        self.group = self.file[str(self.gpath)]
-        if not is_group(self.group):
-            raise ValueError(f"Not a group: {self.H5Path}")
+        if self.fpath:
+            self.file = File(self.fpath, mode=self.mode)
+            self.group = self.file[str(self.gpath)]
+            if not is_group(self.group):
+                raise ValueError(f"Not a group: {self.H5Path}")
         return self
 
     def __exit__(self, exc_type, value, traceback):
-        self.file.close()
+        if self.file:
+            self.file.close()
         self.file = None
         self.group = None
 

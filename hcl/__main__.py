@@ -9,6 +9,7 @@ import sys
 
 from .cli import Cli
 from .commands import Command, all_commands as COMMANDS
+from .utils import Signal
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def main():
     parser.add_argument(
         "-c",
         "--command",
-        help="Run a single command and exit. Output can be redirected but not piped.",
+        help="Run a single command and exit.",
     )
     parser.add_argument(
         "-p",
@@ -53,7 +54,7 @@ def main():
         "-v",
         action="count",
         default=0,
-        help="Increase logging verbosity, up to -vvv for debug.",
+        help="Increase logging verbosity, up to -vv for debug.",
     )
     parser.add_argument(
         "--mode",
@@ -69,17 +70,27 @@ def main():
     args = parser.parse_args()
 
     log_level = {
-        0: logging.CRITICAL,
-        1: logging.WARN,
-        2: logging.INFO,
-        3: logging.DEBUG,
+        0: logging.WARN,
+        1: logging.INFO,
+        2: logging.DEBUG,
     }.get(args.verbose, logging.DEBUG)
 
     logging.basicConfig(level=log_level)
 
+    piped = not sys.stdout.isatty() and bool(args.command)
+
     if not args.file:
-        parser.print_help()
-        sys.exit()
+        retval = 0
+        if args.command and ";" not in args.command and (args.command == "help" or "--help" in args.command):
+            with Cli(None, commands=COMMANDS, interactive=not piped) as cli:
+                result = cli.run_command(shlex.split(args.command))
+            if result != Signal.SUCCESS:
+                retval = 1
+        else:
+            logger.warning("No file given and other args not interpreted as help message command")
+            parser.print_help()
+            retval = 1
+        sys.exit(retval)
 
     fpath_gpath = args.file.split(":")
     els = len(fpath_gpath)
