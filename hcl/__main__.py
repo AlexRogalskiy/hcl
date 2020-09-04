@@ -94,7 +94,9 @@ def main():
     for import_path in args.plugin:
         COMMANDS.extend(get_plugin_commands(import_path))
 
-    with Cli(fpath, gpath=gpath, commands=COMMANDS) as cli:
+    piped = not sys.stdout.isatty() and bool(args.command)
+
+    with Cli(fpath, gpath=gpath, commands=COMMANDS, interactive=not piped) as cli:
         if args.command:
             cli.run_command(shlex.split(args.command))
         else:

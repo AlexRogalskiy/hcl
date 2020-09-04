@@ -26,6 +26,7 @@ class Cli:
         session_kwargs=None,
         print_kwargs=None,
         mode="r",
+        interactive=True,
     ):
         self.fpath = Path(fpath)
         if not gpath:
@@ -45,6 +46,7 @@ class Cli:
         self.session_kwargs = {"completer": NestedCompleter(completers)}
         self.session_kwargs.update(session_kwargs or dict())
         self.mode = mode
+        self.interactive = interactive
 
         self.session = None
         self.file = None
@@ -62,6 +64,15 @@ class Cli:
         self.file = None
         self.group = None
 
+    def run_line(self, s):
+        out = Signal.SUCCESS
+        for cmd in s.split(";"):
+            argv = shlex.split(cmd.strip())
+            out = self.run_command(argv)
+            if out != Signal.SUCCESS:
+                break
+        return out
+
     def run_command(self, argv):
         if not argv:
             return
@@ -71,14 +82,9 @@ class Cli:
             fn = self.commands[cmd]
         except KeyError:
             self.print(f"Not a known command: {cmd}", file=sys.stderr)
-            return
-
-        try:
-            return fn(argv[1:])
-        except Exception as e:
-            logger.exception(e)
-            self.print(f"Uncaught {type(e).__name__}: {e}", file=sys.stderr)
             return Signal.FAILURE
+
+        return fn(argv[1:])
 
     def run(self):
         prefix = f"{self.fpath}:{{}} $ "
@@ -86,12 +92,10 @@ class Cli:
             self.session = PromptSession(**self.session_kwargs)
 
         while True:
-            for token in self.session.prompt(prefix.format(self.gpath)).split(";"):
-                cmd = token.strip()
-                argv = shlex.split(cmd)
-                out = self.run_command(argv)
-                if out == Signal.QUIT:
-                    break
+            line = self.session.prompt(prefix.format(self.gpath))
+            result = self.run_line(line)
+            if result == Signal.QUIT:
+                break
 
     def change_group(self, path: H5Path):
         new_path = normalise_path(path, self.gpath)
@@ -108,7 +112,10 @@ class Cli:
             print_formatted_text(*args, **kwargs)
         else:
             keep = {"sep", "end", "file", "flush"}
+            if self.interactive:
+                formatted_items = [tup[1] for tup in to_formatted_text(args)]
+            else:
+                formatted_items = args
             print(
-                *(tup[1] for tup in to_formatted_text(*args)),
-                **{k: v for k, v in kwargs.items() if k in keep},
+                *formatted_items, **{k: v for k, v in kwargs.items() if k in keep},
             )

@@ -7,3 +7,4 @@ tree-format
 mypy
 flake8
 black
+pipe2codeblock

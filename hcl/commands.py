@@ -22,7 +22,7 @@ class Command(ABC):
     def argument_parser(self) -> ArgumentParser:
         pass
 
-    def __call__(self, argv=()):
+    def __call__(self, argv=()) -> Signal:
         self.logger.debug("Called with arguments %s", argv)
         parser = self.argument_parser()
         try:
@@ -30,7 +30,15 @@ class Command(ABC):
         except SystemExit:
             return Signal.SUCCESS
         self.logger.debug("Parsed arguments to %s", parsed)
-        return self.run(parsed)
+        try:
+            result = self.run(parsed)
+            if not isinstance(result, Signal):
+                result = Signal.SUCCESS
+        except Exception as e:
+            self.logger.exception(str(e))
+            self.context.print(f"Uncaught {type(e).__name__}: {e}", file=sys.stderr)
+            result = Signal.FAILURE
+        return result
 
     @abstractmethod
     def run(self, parsed_args: Namespace) -> Signal:
