@@ -1,15 +1,17 @@
 from setuptools import setup, find_packages
 from pathlib import Path
+import runpy
 
 here = Path(__file__).resolve().parent
 
 long_description = (here / "README.md").read_text()
+version = runpy.run_path(here / "hcl" / "version.py")["__version__"]
 
 install_requires = ["h5py", "prompt-toolkit", "tree-format"]
 
 setup(
     name="hcl",
-    version="0.1.0",
+    version=version,
     description="Interactive CLI for exploring HDF5 files",
     long_description=long_description,
     long_description_content_type="text/markdown",
