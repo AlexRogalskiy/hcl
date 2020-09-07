@@ -84,7 +84,11 @@ def main():
         if (
             args.command
             and ";" not in args.command
-            and (args.command == "help" or args.command.startswith("help ") or "--help" in args.command)
+            and (
+                args.command == "help"
+                or args.command.startswith("help ")
+                or "--help" in args.command
+            )
         ):
             with Cli(None, commands=COMMANDS, interactive=not piped) as cli:
                 result = cli.run_command(shlex.split(args.command))
