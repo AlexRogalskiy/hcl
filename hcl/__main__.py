@@ -12,6 +12,7 @@ from runpy import run_path
 from .cli import Cli
 from .commands import Command, all_commands as COMMANDS
 from .utils import Signal
+from .version import version as __version__
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,12 @@ def main():
             "'a': Read/write if exists, create otherwise."
         ),
     )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="store_true",
+        help="Print version and exit."
+    )
     args = parser.parse_args()
 
     log_level = {
@@ -101,6 +108,10 @@ def main():
     }.get(args.verbose, logging.DEBUG)
 
     logging.basicConfig(level=log_level)
+
+    if args.version:
+        print(__version__)
+        sys.exit()
 
     piped = not sys.stdout.isatty() and bool(args.command)
 
