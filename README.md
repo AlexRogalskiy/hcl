@@ -67,6 +67,20 @@ userblock_size      Get group or dataset userblock_size.
 
 See files in [commands/](./commands) for usage for each command.
 
+## Plugins
+
+Pull requests adding more commands to the core tool are very welcome.
+
+However, `hcl` also supplies an easy route to add functionality locally.
+The `--plugin` option allows you to supply the python import path
+or a file system path to a python script, containing third party commands.
+
+These should subclass `hcl.Command`, and allow you to control autocompletion,
+return codes and so on.
+See `hcl/commands.py` for examples on how to use this class.
+The `context` variable passed to the `Command`'s constructor
+is the main `hcl.cli.Cli` instance.
+
 ## Notes
 
 Very similar to [h5cli](https://pypi.org/project/h5cli/).
