@@ -24,7 +24,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    packages=find_packages(include="hcl"),
+    packages=find_packages(exclude="tests"),
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
     python_requires=">=3.8, <4",
