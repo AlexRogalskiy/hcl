@@ -6,6 +6,8 @@ import logging
 import shlex
 from importlib import import_module
 import sys
+import os
+from runpy import run_path
 
 from .cli import Cli
 from .commands import Command, all_commands as COMMANDS
@@ -14,10 +16,18 @@ from .utils import Signal
 logger = logging.getLogger(__name__)
 
 
+def is_py_file(s):
+    return (os.sep in s or "/" in s or os.endswith(".py")) and os.path.exists(s)
+
+
 def get_plugin_commands(import_path):
     mod_name, obj_name = import_path.split(":")
-    mod = import_module(mod_name)
-    obj = getattr(mod, obj_name)
+    if is_py_file(mod_name):
+        obj = run_path(mod_name)[obj_name]
+    else:
+        mod = import_module(mod_name)
+        obj = getattr(mod, obj_name)
+
     if hasattr(obj, "__call__"):
         obj = obj()
 
@@ -26,7 +36,9 @@ def get_plugin_commands(import_path):
     else:
         out = list(obj)
 
-    logger.debug("Got commands from %s : %s", import_path, [c.__name__ for c in out])
+    logger.debug(
+        "Got commands from '%s' : %s", import_path, [f"'{c.__name__}'" for c in out]
+    )
     return out
 
 
@@ -35,7 +47,11 @@ def main():
     parser.add_argument(
         "file",
         nargs="?",
-        help="HDF5 file to explore. Add ':/path/to/group' to start in a specific group. If this is not given, only `--help` or `--command '<some_command> --help'` can be used.",
+        help=(
+            "HDF5 file to explore. Add ':/path/to/group' to start in a specific group. "
+            "If this is not given, only `--help` or "
+            "`--command '<some_command> --help'` can be used."
+        ),
     )
     parser.add_argument(
         "-c",
@@ -46,7 +62,14 @@ def main():
         "-p",
         "--plugin",
         action="append",
-        help="Import path for additional commands. Imported object can be a Command subclass, an iterable of them, or a callable returning either. Format '{absolute_module}:{object}'. Can be used multiple times.",
+        help=(
+            "Import path for additional commands, in the form '{module}:{object}', "
+            "where {module} can be an absolute import path, "
+            "or the path to a python file which can be run; "
+            "{object} can be a Command subclass, an iterable of them, "
+            "or a callable returning either. "
+            "Can be used multiple times."
+        ),
         default=(),
     )
     parser.add_argument(
@@ -60,12 +83,14 @@ def main():
         "--mode",
         "-m",
         default="r",
-        help="Mode in which to open the file. "
-        "'r' (default): Readonly, file must exist. "
-        "'r+': Read/write, file must exist. "
-        "'w': Create file, truncate if exists. "
-        "'w-' or 'x': Create file, fail if exists. "
-        "'a': Read/write if exists, create otherwise.",
+        help=(
+            "Mode in which to open the file. "
+            "'r' (default): Readonly, file must exist. "
+            "'r+': Read/write, file must exist. "
+            "'w': Create file, truncate if exists. "
+            "'w-' or 'x': Create file, fail if exists. "
+            "'a': Read/write if exists, create otherwise."
+        ),
     )
     args = parser.parse_args()
 
