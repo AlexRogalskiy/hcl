@@ -131,3 +131,5 @@ dmypy.json
 *.hdf5
 *.h5
 *.hdf
+
+hcl/version.py
