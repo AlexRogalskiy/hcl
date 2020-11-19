@@ -13,7 +13,9 @@ CLI for interactive exploration of HDF5 files.
 
 positional arguments:
   file                  HDF5 file to explore. Add ':/path/to/group' to start
-                        in a specific group.
+                        in a specific group. If this is not given, only
+                        `--help` or `--command '<some_command> --help'` can be
+                        used.
 
 optional arguments:
   -h, --help            show this help message and exit
