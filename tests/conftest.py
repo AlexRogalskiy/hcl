@@ -15,9 +15,9 @@ def hdf5_path(tmp_path):
 
         g2 = f.create_group("g2")
 
-        ds = f.create_dataset("ds", data=np.ones((5, 8)))
-        ds1 = g1.create_dataset("ds1", data=np.ones((5, 5)))
-        ds1_1 = g1_1.create_dataset("ds1_1", data=np.ones((10, 15)) * 2)
-        ds2 = g2.create_dataset("ds2", data=np.ones((3, 4, 5)) * 4)
+        f.create_dataset("ds", data=np.ones((5, 8)))
+        g1.create_dataset("ds1", data=np.ones((5, 5)))
+        g1_1.create_dataset("ds1_1", data=np.ones((10, 15)) * 2)
+        g2.create_dataset("ds2", data=np.ones((3, 4, 5)) * 4)
 
     return path
