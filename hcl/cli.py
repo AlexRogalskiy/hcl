@@ -100,6 +100,8 @@ class Cli:
                 break
 
     def change_group(self, path: H5Path):
+        if self.file is None:
+            raise RuntimeError("File not open")
         new_path = normalise_path(path, self.gpath)
         new_obj = self.file[str(new_path)]
         if is_dataset(new_obj):
