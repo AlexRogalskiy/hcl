@@ -1,10 +1,10 @@
 # runtime
-h5py
-prompt-toolkit
-tree-format
+h5py==3.1.0
+prompt-toolkit==3.0.8
+tree-format==0.1.2
 
 # dev
-mypy
-flake8
-black
-pipe2codeblock
+mypy==0.790
+flake8==3.8.4
+black==20.8b1
+pipe2codeblock==1.0.0
