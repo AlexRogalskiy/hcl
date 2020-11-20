@@ -390,12 +390,16 @@ class Help(Command):
         return Signal.SUCCESS
 
 
+def format_shape(ds: Dataset) -> str:
+    return "x".join(str(s) for s in ds.shape)
+
+
 def format_dataset(ds: Dataset):
     try:
         dtype = str(ds.dtype)
     except Exception:
         dtype = "<UNKNOWN>"
-    return f"{obj_name(ds)}\t{'x'.join(str(s) for s in ds.shape)}\t{dtype}"
+    return f"{obj_name(ds)}\t{format_shape(ds)}\t{dtype}"
 
 
 def format_obj(obj):
