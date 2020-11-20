@@ -50,7 +50,7 @@ def main():
         nargs="?",
         help=(
             "HDF5 file to explore. Add ':/path/to/group' to start in a specific group. "
-            "If this is not given, only `--help` or "
+            "If this is not given, only `--version`, `--help`, or "
             "`--command '<some_command> --help'` can be used."
         ),
     )
@@ -94,10 +94,7 @@ def main():
         ),
     )
     parser.add_argument(
-        "--version",
-        "-V",
-        action="store_true",
-        help="Print version and exit."
+        "--version", "-V", action="store_true", help="Print version and exit."
     )
     args = parser.parse_args()
 
