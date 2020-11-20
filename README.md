@@ -70,7 +70,9 @@ userblock_size      Get group or dataset userblock_size.
 
 See files in [commands/](./commands) for usage for each command.
 
-## Plugins
+## Development
+
+### Plugins
 
 Pull requests adding more commands to the core tool are very welcome.
 
@@ -84,7 +86,17 @@ See `hcl/commands.py` for examples on how to use this class.
 The `context` variable passed to the `Command`'s constructor
 is the main `hcl.cli.Cli` instance.
 
+### Documentation
+
+Run `make docs` to automatically update this README's usage information,
+and the command documentation in `./commands`.
+CI checks whether these are up to date.
+
 ## Notes
 
 Very similar to [h5cli](https://pypi.org/project/h5cli/).
-`hcl` features more documentation, piping output from `--command` mode, and doesn't crash when I try to run it.
+`hcl` features:
+
+- more documentation
+- piping output from `--command` mode
+- doesn't crash when I try to run it.
