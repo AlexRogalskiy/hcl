@@ -7,7 +7,8 @@ Designed to be familiar to Unix CLI users, but no particular effort has been mad
 ## Usage
 
 ```_help
-usage: hcl [-h] [-c COMMAND] [-p PLUGIN] [--verbose] [--mode MODE] [file]
+usage: hcl [-h] [-c COMMAND] [-p PLUGIN] [--verbose] [--mode MODE] [--version]
+           [file]
 
 CLI for interactive exploration of HDF5 files.
 
@@ -22,17 +23,19 @@ optional arguments:
   -c COMMAND, --command COMMAND
                         Run a single command and exit.
   -p PLUGIN, --plugin PLUGIN
-                        Import path for additional commands. Imported object
-                        can be a Command subclass, an iterable of them, or a
-                        callable returning either. Format
-                        '{absolute_module}:{object}'. Can be used multiple
-                        times.
+                        Import path for additional commands, in the form
+                        '{module}:{object}', where {module} can be an absolute
+                        import path, or the path to a python file which can be
+                        run; {object} can be a Command subclass, an iterable
+                        of them, or a callable returning either. Can be used
+                        multiple times.
   --verbose, -v         Increase logging verbosity, up to -vv for debug.
   --mode MODE, -m MODE  Mode in which to open the file. 'r' (default):
                         Readonly, file must exist. 'r+': Read/write, file must
                         exist. 'w': Create file, truncate if exists. 'w-' or
                         'x': Create file, fail if exists. 'a': Read/write if
                         exists, create otherwise.
+  --version, -V         Print version and exit.
 ```
 
 ### Commands available
