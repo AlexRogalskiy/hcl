@@ -9,3 +9,11 @@ commands:
 		xargs --max-procs 4 -I _ sh -c "printf '# _\n\n\`\`\`\n' > commands/_.md && hcl --command '_ --help' >> commands/_.md && echo '\`\`\`' >> commands/_.md"
 
 docs: readme commands
+
+fmt:
+	black .
+
+lint:
+	black . --check
+	flake8 .
+	mypy --ignore-missing-imports .
