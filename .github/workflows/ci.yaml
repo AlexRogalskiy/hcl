@@ -30,7 +30,7 @@ jobs:
         run: |
           pip install $(grep ^pipe2codeblock requirements.txt)
           make docs
-          [[ -z $(git status -s) ]]
+          git diff --exit-code
 
   # test:
   #   runs-on: ubuntu-18.04
